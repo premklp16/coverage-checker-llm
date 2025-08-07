@@ -122,29 +122,33 @@ checker = None
 @app.post("/predict")
 async def predict_coverage(file: UploadFile, scenario: str = Form(...)):
     global checker
+    logger.info(f"Received request with file: {file.filename}, scenario: {scenario}")
     try:
-        # Use a unique temp file name to avoid conflicts
         pdf_path = f"temp_{int(time.time())}_{file.filename}"
+        logger.info(f"Saving PDF to {pdf_path}")
         with open(pdf_path, 'wb') as f:
             f.write(await file.read())
         
         output_txt = "policy.txt"
+        logger.info(f"Converting PDF to text in {output_txt}")
         pdf_to_text.pdf_to_lines([pdf_path], output_txt)
         
         output_json = "embeddings.json"
+        logger.info(f"Generating embeddings in {output_json}")
         Embed_the_text_file.process_text_file(output_txt, output_json, model_name='all-MiniLM-L6-v2', batch_size=256)
         
         if not os.path.exists(output_json):
             raise HTTPException(status_code=500, detail="Failed to generate embeddings")
         
+        logger.info(f"Initializing checker with {output_json}")
         checker = FixedInsuranceCoverageChecker(embeddings_file=output_json)
         result = await checker.get_coverage_decision(scenario)
         result["sections"] = [{"text": text, "name": name, "relevance": sim} for text, name, sim in result["sections"]]
         
+        logger.info(f"Returning result: {result}")
         clear_files.clear()
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
-        
         return JSONResponse(content=result)
     except HTTPException as he:
         logger.error(f"HTTP Exception: {str(he.detail)}")
@@ -153,7 +157,7 @@ async def predict_coverage(file: UploadFile, scenario: str = Form(...)):
             os.remove(pdf_path)
         raise
     except Exception as e:
-        logger.error(f"API error: {str(e)}")
+        logger.error(f"API error: {str(e)}", exc_info=True)
         clear_files.clear()
         if 'pdf_path' in locals() and os.path.exists(pdf_path):
             os.remove(pdf_path)
