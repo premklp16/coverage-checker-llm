@@ -13,6 +13,7 @@ import pdf_to_text
 import Embed_the_text_file
 import clear_files
 import os
+import time
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
