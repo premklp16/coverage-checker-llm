@@ -158,6 +158,10 @@ async def predict_coverage(file: UploadFile, scenario: str = Form(...)):
             os.remove(pdf_path)
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/")
+async def read_root():
+    return {"message": "Insurance Insight AI API is running. Use /predict for coverage checks."}
+
 @app.on_event("shutdown")
 def shutdown_event():
     clear_files.clear()
