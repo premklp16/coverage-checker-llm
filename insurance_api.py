@@ -132,7 +132,7 @@ async def predict_coverage(file: UploadFile, scenario: str = Form(...)):
         pdf_to_text.pdf_to_lines([pdf_path], output_txt)
         
         output_json = "embeddings.json"
-        Embed_the_text_file.process_text_file(output_txt, output_json, model_name='all-MiniLM-L6-v2', batch_size=128)
+        Embed_the_text_file.process_text_file(output_txt, output_json, model_name='all-MiniLM-L6-v2', batch_size=256)
         
         if not os.path.exists(output_json):
             raise HTTPException(status_code=500, detail="Failed to generate embeddings")
